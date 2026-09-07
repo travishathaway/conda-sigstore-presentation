@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant S as "User or GitHub Action"
+    participant C as "Sigstore client (Cosign)"
+    participant I as "OIDC provider"
+    participant F as "Fulcio CA"
+    participant R as "Rekor log"
+
+    S->>I: Authenticate identity
+    I-->>C: Issue OIDC identity token
+    C->>C: Generate ephemeral key pair
+    C->>F: Send identity token and public key
+    F->>F: Verify OIDC identity
+    F-->>C: Issue short-lived certificate
+    C->>C: Sign artifact with private key
+    C->>R: Upload digest, signature, and certificate
+    R-->>C: Return transparency-log proof
+    C->>C: Discard ephemeral private key

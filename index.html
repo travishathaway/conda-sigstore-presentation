@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+		/>
+
+		<title>Signing Conda Packages with Sigstore</title>
+
+		<link rel="icon" href="data:," />
+		<style>
+			.kinda-small {
+				font-size: 0.85em;
+			}
+			.small {
+				font-size: 0.75em;
+			}
+			.very-small {
+				font-size: 0.5em;
+			}
+			.faded {
+				color: #666666;
+			}
+			.left {
+				text-align: left;
+			}
+			li {
+				margin-bottom: 0.5em !important;
+			}
+			/* Logo floated in the upper-right corner, text wraps around it */
+			.with-corner-logo {
+				display: flow-root; /* contains the float without a manual clearfix */
+			}
+			.header-logo {
+				float: right;
+				width: 25%;
+				margin: 0 0 0 0 !important;
+				background-color: #dddddd;
+				border-radius: 25px;
+				padding: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<!-- 1. Title -->
+				<section class="title">
+					<img class="wordmark" alt="conda" width="40%" />
+					<h1>Sigstore 101</h1>
+					<p class="subtitle">... and using it in conda</p>
+					<p class="meta">Travis Hathaway &middot; Sep 2026</p>
+				</section>
+
+				<!-- 2. Agenda -->
+				<section>
+					<h2 class="left">Agenda</h2>
+					<div class="single">
+						<ul>
+							<li class="fragment">Sigstore basics; including Fulcio & Rekor</li>
+							<li class="fragment">What the in-toto framework is and why it matters</li>
+							<li class="fragment">PyPI's adoption of attestations</li>
+							<li class="fragment">CEP 27: conda's publish attestation</li>
+							<li class="fragment">CEP ???: serving attestations (in progress)</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Quick roadmap for the talk. We can move fast through the conda-specific
+						parts since this audience already knows conda internals &mdash; the goal
+						is to spend most of the time on how Sigstore/in-toto actually work.
+					</aside>
+				</section>
+
+				<!-- 3. What is Sigstore? -->
+				<section>
+					<h3 class="left">What is Sigstore?</h3>
+					<div class="single">
+						<p class="kinda-small">
+							<em>Sigstore comprises several tools that can be used independently or combined for a
+							comprehensive supply chain security solution. Sign your software without navigating
+							tricky security protocols. Verify signatures against a tamper-proof log.</em>
+						</p>
+						<div class="faded very-small">
+							source: <a href="https://www.sigstore.dev/how-it-works">sigstore.dev</a>
+						</div>
+					</div>
+					<aside class="notes">
+						Motivate why Sigstore exists before defining it. The pain isn't
+						cryptography &mdash; it's key management.
+					</aside>
+				</section>
+
+				<!-- 4. The problem: long-lived signing keys -->
+				<section>
+					<h3 class="left">What problems does it solve?</h3>
+					<div class="single">
+						<ul>
+							<li class="fragment">Helps prevent the <strong>tampering</strong> of software artifacts</li>
+							<li class="fragment">Traditional signing keys are <strong>difficult</strong> to manage securely</li>
+							<li class="fragment">Signatures often lack trustworthy <strong>identity</strong> and <strong>auditability</strong></li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Frame Sigstore as infrastructure, not a single tool &mdash; Cosign is
+						just the CLI most people touch.
+					</aside>
+				</section>
+
+				<!-- 5a. How Sigstore solves the key problem -->
+				<section>
+					<h3 class="left">Before Sigstore</h3>
+					<ul>
+						<li class="fragment">Maintainer generates a keypair</li>
+						<li class="fragment">Publishes, rotates, and protects the public key forever</li>
+						<li class="fragment">Users must fetch &amp; trust that key out-of-band</li>
+					</ul>
+				</section>
+
+				<!-- 5b. How Sigstore solves the key problem -->
+				<section>
+					<p class="kinda-small left">
+						<em>
+							Sigstore addresses these problems by helping users move away from a key-based
+							signing approach to an identity-based one.
+						</em>
+					</p>
+					<div class="faded very-small left">
+						source: <a href="https://docs.sigstore.dev/about/overview">docs.sigstore.dev</a>
+					</div>
+				</section>
+
+				<!-- 5c. How Sigstore solves the key problem -->
+				<section>
+					<h3 class="left">With Sigstore</h3>
+					<ul>
+						<li class="fragment">Maintainer proves identity via OIDC ("I am <code>alice@example.com</code>" or "I am this exact GitHub Actions workflow")</li>
+						<li class="fragment">Gets an ephemeral keypair + short-lived cert</li>
+						<li class="fragment">Signs, then discards the private key</li>
+						<li class="fragment">Everything is logged publicly</li>
+					</ul>
+					<aside class="notes">
+						No keys to manage, no keys to leak &mdash; that's the headline benefit.
+					</aside>
+				</section>
+				<section>
+					<img src="./sigstore-process.svg" />
+				</section>
+
+				<!-- 6. Fulcio -->
+				<section>
+					<h3 class="left" style="position: relative">
+						<img width="40%" src="./assets/fulcio.svg" alt="Fulcio logo" />
+						<span style="position: absolute; right: 0; bottom: 40px" class="very-small faded">"... the certificate authority"</span>
+					</h3>
+					<div class="single with-corner-logo">
+						<ul class="small">
+							<li class="fragment">Issues X.509 certs that bind an <em>ephemeral</em> public key to a verified <strong>identity</strong> &mdash; a human via OIDC login, or a machine identity like <code>github.com/org/repo/.github/workflows/release.yml@refs/tags/v1.2.3</code></li>
+							<li class="fragment">Certs are valid for minutes, not years</li>
+							<li class="fragment">Issuance itself is logged to a Certificate Transparency (RFC 6962) log</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Fulcio is the piece that turns "I logged into GitHub/Google" into a
+						cryptographic certificate a verifier can check.
+					</aside>
+				</section>
+
+				<!-- 7. Rekor -->
+				<section>
+					<h3 class="left" style="position: relative">
+						<img width="40%" src="./assets/rekor.svg" alt="Rekor logo" />
+						<span style="position: absolute; right: 0; bottom: 40px" class="very-small faded">"... the transparency log"</span>
+					</h3>
+					<div class="single with-corner-logo">
+						<ul class="small">
+							<li class="fragment">An append-only, publicly auditable, tamper-evident log of signing events (public good instance at <code>rekor.sigstore.dev</code>)</li>
+							<li class="fragment">Every signature's existence becomes publicly observable, not just verifiable against a key</li>
+							<li class="fragment">An inclusion proof lets anyone confirm an entry is really in the log without blindly trusting the log operator</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Rekor is what makes short-lived certs safe to trust &mdash; anyone can
+						audit who signed what and when.
+					</aside>
+				</section>
+
+				<!-- 8. Why transparency matters -->
+				<section data-background-color="#19191b">
+					<h3 class="left">Why transparency matters</h3>
+					<div class="single">
+						<ul>
+							<li class="fragment">Without a log, a compromised identity can be used for a <em>targeted</em> attack the public never sees</li>
+							<li class="fragment">With a log, any use of an identity to sign something is discoverable in real time</li>
+							<li class="fragment">Turns "silent targeted compromise" into "publicly detectable event"</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						This is the property CEP 27 explicitly calls out under
+						"Transparency and auditability."
+					</aside>
+				</section>
+
+				<!-- 9. What is in-toto? -->
+				<section>
+					<h2>What is in-toto?</h2>
+					<div class="single">
+						<ul>
+							<li>A framework/standard (<code>in-toto.io</code>) for defining machine-readable <strong>attestations</strong></li>
+							<li>An attestation = a signed <strong>Statement</strong> made of a <strong>subject</strong> (what's being attested to &mdash; e.g. a file + its digest) and a <strong>predicate</strong> (arbitrary metadata about the subject, identified by a <strong>predicate type</strong> that defines its schema)</li>
+							<li>in-toto itself doesn't sign or provide transparency &mdash; it just defines the <em>shape</em> of the claim</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						in-toto is a data format, not a trust mechanism &mdash; that distinction
+						sets up the next slide.
+					</aside>
+				</section>
+
+				<!-- 10. in-toto + Sigstore: two different jobs -->
+				<section>
+					<h2>in-toto + Sigstore: two different jobs</h2>
+					<div class="columns">
+						<div class="column">
+							<h3>in-toto provides</h3>
+							<ul>
+								<li>The statement format (subject / predicate / predicate type)</li>
+								<li>A way to express arbitrary supply-chain claims (build provenance, publish events, SLSA, etc.)</li>
+							</ul>
+						</div>
+						<div class="column">
+							<h3>Sigstore provides</h3>
+							<ul>
+								<li>The <em>signing</em> mechanism (ephemeral keys + Fulcio identity binding)</li>
+								<li>The <em>transparency</em> mechanism (Rekor)</li>
+								<li>The distributable container &mdash; a "Sigstore bundle" (cert + statement signature + inclusion proof)</li>
+							</ul>
+						</div>
+					</div>
+					<aside class="notes">
+						in-toto answers "what are we claiming"; Sigstore answers "how do we
+						trust who claimed it."
+					</aside>
+				</section>
+
+				<!-- 11. Demo: signing osmprj's release checksums -->
+				<section>
+					<h2>Demo: signing osmprj's release checksums</h2>
+					<div class="single">
+						<p>
+							<a href="https://github.com/travishathaway/osmprj">osmprj</a> &mdash; a
+							tool for managing OpenStreetMap data. Release <code>0.3.0</code>'s CI
+							builds installers for 4 platforms and produces a
+							<code>checksums.sha256</code> file listing their hashes:
+						</p>
+						<pre><code class="language-plaintext" data-trim>
+432e607973e8fc557ce4c0a3e4052212f4e7259f65d016dfcf51aa6d7b084f78  osmprj-linux-64-installer.sh
+657aa973215f7778ef4f8b50b9ae0f35efd03508fc3359698423abb488530f3d  osmprj-linux-aarch64-installer.sh
+2bb9de9e33336ff4d279293d0f84fb50ff3206b151207ce115444a7970756ade  osmprj-osx-arm64-installer.sh
+3be67cd9a21b7a9467139f9008149c559072b14eb9470faf129cb4844e1f3314  install.sh
+						</code></pre>
+					</div>
+					<aside class="notes">
+						Real file content from the actual 0.3.0 release, not a mock-up. This is
+						the artifact we're about to sign.
+					</aside>
+				</section>
+
+				<!-- 12. Signing with cosign -->
+				<section data-background-color="#19191b">
+					<h2>Signing with cosign</h2>
+					<div class="single">
+						<pre><code class="language-yaml" data-trim data-line-numbers>
+- name: Generate checksums
+  run: |
+    (cd installers && sha256sum osmprj-*.sh osmprj-*.ps1) > checksums.sha256
+    (cd scripts && sha256sum install.sh install.ps1) >> checksums.sha256
+
+- uses: sigstore/cosign-installer@v3
+
+- name: Sign checksums
+  run: |
+    cosign sign-blob \
+      --yes \
+      --bundle checksums.sha256.bundle \
+      checksums.sha256
+						</code></pre>
+					</div>
+					<aside class="notes">
+						Runs entirely inside GitHub Actions with `permissions: id-token: write`.
+						No secrets configured &mdash; the OIDC token from the workflow run *is*
+						the identity proof. Produces `checksums.sha256.bundle`, uploaded as a
+						release asset next to `checksums.sha256`.
+					</aside>
+				</section>
+
+				<!-- 13. What's inside the bundle -->
+				<section>
+					<h2>What's inside the bundle</h2>
+					<div class="single">
+						<p>A Sigstore bundle is a single JSON file containing:</p>
+						<ul>
+							<li>The short-lived signing certificate from Fulcio (identity = <code>.../release.yml@refs/tags/0.3.0</code>, issuer = <code>token.actions.githubusercontent.com</code>)</li>
+							<li>The signature over the checksums file</li>
+							<li>The Rekor inclusion proof</li>
+						</ul>
+						<p>Ship this one file &mdash; no separate public key to distribute.</p>
+					</div>
+					<aside class="notes">
+						Emphasize "one file" &mdash; there's nothing else a consumer needs to
+						fetch or manage.
+					</aside>
+				</section>
+
+				<!-- 14. Verifying with cosign -->
+				<section data-background-color="#19191b">
+					<h2>Verifying with cosign</h2>
+					<div class="single">
+						<pre><code class="language-bash" data-trim data-line-numbers>
+cosign verify-blob \
+  --bundle checksums.sha256.bundle \
+  --certificate-identity "https://github.com/travishathaway/osmprj/.github/workflows/release.yml@refs/tags/0.3.0" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  checksums.sha256
+						</code></pre>
+						<pre><code class="language-plaintext" data-trim>
+Verified OK
+						</code></pre>
+					</div>
+					<aside class="notes">
+						Emphasize the verifier pins an *identity + issuer*, not a key &mdash;
+						that's the philosophical shift from traditional signing.
+					</aside>
+				</section>
+
+				<!-- 15. Python led the way -->
+				<section>
+					<h2>Python led the way: PEP 740 / PyPI attestations</h2>
+					<div class="single">
+						<ul>
+							<li><a href="https://docs.pypi.org/attestations/">docs.pypi.org/attestations</a> &mdash; PyPI now accepts <strong>digital attestations</strong> on uploads, built on PEP 740 and the in-toto Attestation Framework</li>
+							<li>Same two ingredients as our conda story: in-toto for the statement shape, Sigstore-style short-lived certs for signing</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						PyPI is proof this isn't theoretical &mdash; it's already running in
+						production for one of the largest package ecosystems.
+					</aside>
+				</section>
+
+				<!-- 16. What PyPI actually supports today -->
+				<section>
+					<h2>What PyPI actually supports today</h2>
+					<div class="columns">
+						<div class="column">
+							<h3>Predicate types</h3>
+							<ul>
+								<li><strong>SLSA Provenance</strong></li>
+								<li><strong>PyPI Publish attestation</strong></li>
+								<li>Max 2 attestations per file, no duplicate predicate types</li>
+							</ul>
+						</div>
+						<div class="column">
+							<h3>Who can attest</h3>
+							<ul>
+								<li>Only <strong>Trusted Publisher</strong> identities: GitHub Actions, GitLab CI/CD, Google Cloud, ActiveState</li>
+								<li>Machine identities, not personal keys</li>
+							</ul>
+						</div>
+					</div>
+					<aside class="notes">
+						Bridge to conda &mdash; CEP 27 explicitly cites PyPI/PEP 740 (and npm,
+						RubyGems) as prior art.
+					</aside>
+				</section>
+
+				<!-- 17. CEP 27: conda's publish attestation -->
+				<section>
+					<h2>CEP 27: conda's publish attestation</h2>
+					<div class="single">
+						<ul>
+							<li>"Standardizing a publish attestation for the conda ecosystem" &mdash; <strong>Accepted</strong> CEP (<a href="https://conda.org/learn/ceps/cep-0027">conda.org/learn/ceps/cep-0027</a>)</li>
+							<li>Authors: Wolf Vollprecht &amp; William Woodruff</li>
+							<li>Defines an in-toto Statement + predicate type (<code>https://schemas.conda.org/attestations-publish-1.schema.json</code>) that answers: <em>who published this package, with what hash, to what channel?</em></li>
+						</ul>
+					</div>
+					<aside class="notes">
+						This is conda's own version of the PyPI Publish attestation from the
+						previous slide.
+					</aside>
+				</section>
+
+				<!-- 18. The CEP 27 attestation shape -->
+				<section data-background-color="#19191b">
+					<h2>The CEP 27 attestation shape</h2>
+					<div class="single">
+						<pre><code class="language-json" data-trim data-line-numbers>
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [{
+    "name": "file-name-0.0.1-h123456_5.conda",
+    "digest": {"sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"}
+  }],
+  "predicateType": "https://schemas.conda.org/attestations-publish-1.schema.json",
+  "predicate": {
+    "targetChannel": "https://prefix.dev/conda-forge"
+  }
+}
+						</code></pre>
+					</div>
+					<aside class="notes">
+						Note the direct parallel to PyPI's publish attestation &mdash; conda
+						adds `targetChannel` because, unlike PyPI, there's no single canonical
+						index.
+					</aside>
+				</section>
+
+				<!-- 19. CEP 27: sign & verify flow -->
+				<section>
+					<h2>CEP 27: sign &amp; verify flow</h2>
+					<div class="columns">
+						<div class="column">
+							<h3>Sign</h3>
+							<ol>
+								<li>Generate ephemeral keypair</li>
+								<li>Bind to identity via Fulcio cert</li>
+								<li>Sign the in-toto statement</li>
+								<li>Log to Rekor</li>
+								<li>Produce a Sigstore bundle</li>
+							</ol>
+						</div>
+						<div class="column">
+							<h3>Verify</h3>
+							<ol>
+								<li>Fetch package + bundle</li>
+								<li>Verify bundle against expected identity</li>
+								<li>Check predicateType, subject name/digest, and (if present) targetChannel match</li>
+							</ol>
+						</div>
+					</div>
+					<aside class="notes">
+						This is exactly the generic Sigstore flow from earlier slides, just
+						instantiated with conda's specific predicate.
+					</aside>
+				</section>
+
+				<!-- 20. CEP 27's open question -->
+				<section>
+					<h2>CEP 27's open question: how do you <em>get</em> the bundle?</h2>
+					<div class="single">
+						<ul>
+							<li>CEP 27 deliberately does <strong>not</strong> define a distribution mechanism for the bundles</li>
+							<li>Nor how clients establish trust in <em>which</em> identities to trust for a given package</li>
+							<li>Both are explicitly listed as future work in the CEP &mdash; that's exactly the gap CEP 142 is trying to close</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Set up the transition to CEP 142 &mdash; CEP 27 is "accepted" but
+						intentionally incomplete on distribution.
+					</aside>
+				</section>
+
+				<!-- 21. CEP 142 (draft): serving attestations from channels -->
+				<section>
+					<h2>CEP 142 (draft): serving attestations from channels</h2>
+					<div class="single">
+						<p><strong>Open PR, still under review &mdash; details below may change.</strong></p>
+						<ul>
+							<li>Proposes a <code>&lt;package_url&gt;.sigs</code> endpoint returning a JSON array of Sigstore bundles for that package</li>
+							<li>A new repodata field lets clients detect when a package's attestations exist/change without an extra round trip per package</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Stress that this is a moving target &mdash; field names and exact
+						semantics are being actively revised in review.
+					</aside>
+				</section>
+
+				<!-- 22. CEP 142: fetch & verify sketch -->
+				<section data-background-color="#19191b">
+					<h2>CEP 142: fetch &amp; verify sketch</h2>
+					<div class="single">
+						<pre><code class="language-bash" data-trim>
+GET https://conda.anaconda.org/conda-forge/linux-64/numpy-1.26.0-py311h.conda.sigs
+						</code></pre>
+						<pre><code class="language-yaml" data-trim data-line-numbers>
+trusted_identities:
+  - "https://github.com/conda-forge/*"
+require: error   # error | warn | ignore
+						</code></pre>
+					</div>
+					<aside class="notes">
+						Verification of each returned bundle still follows CEP 27's rules.
+						Label this "proposed, actively being revised in review" and mention the
+						still-open debates: whether the OIDC issuer must be pinned alongside
+						identity patterns, how lockfiles should pin/record attestation state
+						(since `.sigs` is mutable), and precise 404 vs. empty-array semantics
+						for channels that don't implement the CEP at all.
+					</aside>
+				</section>
+
+				<!-- 23. Where this leaves conda -->
+				<section>
+					<h2>Where this leaves conda</h2>
+					<div class="single">
+						<ul>
+							<li><strong>CEP 27</strong> = the <em>what</em> &mdash; the attestation format (accepted)</li>
+							<li><strong>CEP 142</strong> = the <em>how it's served</em> (in progress)</li>
+							<li>Together they'd let conda clients cryptographically verify "who published this, and where" &mdash; the same way PyPI and npm already do &mdash; without anyone managing a long-lived key</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Wrap-up slide &mdash; recap the two-piece puzzle before moving to
+						resources.
+					</aside>
+				</section>
+
+				<!-- 24. Resources / Links -->
+				<section>
+					<h2>Resources / Links</h2>
+					<div class="single">
+						<ul>
+							<li><a href="https://sigstore.dev">Sigstore</a> &mdash; sigstore.dev</li>
+							<li><a href="https://github.com/sigstore/fulcio">Fulcio</a> &mdash; github.com/sigstore/fulcio</li>
+							<li><a href="https://rekor.sigstore.dev">Rekor</a> &mdash; rekor.sigstore.dev</li>
+							<li><a href="https://in-toto.io">in-toto</a> &mdash; in-toto.io</li>
+							<li><a href="https://github.com/travishathaway/osmprj">osmprj</a> &mdash; github.com/travishathaway/osmprj</li>
+							<li><a href="https://docs.pypi.org/attestations/">PyPI attestations</a> &mdash; docs.pypi.org/attestations</li>
+							<li><a href="https://conda.org/learn/ceps/cep-0027">CEP 27</a> &mdash; conda.org/learn/ceps/cep-0027</li>
+							<li><a href="https://github.com/conda/ceps/pull/142">CEP 142 PR</a> &mdash; github.com/conda/ceps/pull/142</li>
+						</ul>
+					</div>
+					<aside class="notes">
+						Leave this slide up for a moment so people can photograph the links, or
+						point them to slides being shared afterward.
+					</aside>
+				</section>
+
+				<!-- 25. Thank you / Q&A -->
+				<section class="title" data-background-color="#19191b">
+					<h1>Thank you</h1>
+					<p class="subtitle">Questions?</p>
+					<aside class="notes">
+						Open the floor for questions. Have the CEP 27 and CEP 142 links handy
+						in case people want to dig into specifics.
+					</aside>
+				</section>
+			</div>
+		</div>
+
+		<script type="module" src="./main.js"></script>
+	</body>
+</html>
