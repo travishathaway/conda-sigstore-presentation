@@ -1,15 +1,16 @@
-# conda reveal.js starter kit
+# Signing Conda Packages with Sigstore
 
-A starter kit for creating conda themed [reveal.js](https://revealjs.com) presentations
-using the [`reveal.js-conda-theme`](../reveal.js-conda-theme) package.
+A [reveal.js](https://revealjs.com) presentation about Sigstore's use in conda —
+covering Sigstore basics, Fulcio, Rekor, and in-toto attestations, a cosign signing/
+verification demo, PyPI's adoption of package attestations, and conda's own CEP 
+proposals for signing and verifying packages.
 
-`index.html` contains one example of each slide template: title, single column, two
-columns, dark, and light. See [reveal.js-conda-theme's README](../reveal.js-conda-theme/README.md#markup-conventions)
-for the markup conventions each template relies on.
+Built with the [`reveal.js-conda-theme`](https://www.npmjs.com/package/reveal.js-conda-theme)
+package. See its README (bundled at `node_modules/reveal.js-conda-theme/README.md`)
+for the markup conventions used in `index.html` (title, single column, two columns,
+dark, and light slide templates).
 
 ## Getting started
-
-Copy this folder out as the seed for your own presentation repo, then:
 
 ```bash
 npm install
