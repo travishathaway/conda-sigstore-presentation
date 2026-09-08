@@ -223,27 +223,48 @@
                     <h1>Demo Time! <br /> 🏃</h1>
                 </section>
 
+				<!-- What is an attestation? -->
+				<section>
+					<h3 class="left">What's a software attestation?</h3>
+					<ul class="small">
+						<li class="fragment">
+							An <strong>authenticated claim</strong> about a specific artifact
+						</li>
+						<li class="fragment">
+							Adds <strong>context</strong> beyond just who signed it like where the source came from
+							and where it was built
+						</li>
+						<li class="fragment">
+							Typically <strong>machine-readable</strong> (e.g. JSON with schemas)
+						</li>
+						<li class="fragment">
+							Provides evidence, <strong>not truth</strong>: attestations prove who created it and that it was
+							not altered, not that the underlying claim is true
+						</li>
+					</ul>
+				</section>
+
 				<!-- 9. What is in-toto? -->
 				<section>
                     <h3 class="left" style="position: relative">
-                        <img width="40%" src="./assets/in-toto-horizontal-black.svg" alt="Rekor logo" />
+                        <img width="40%" src="./assets/in-toto-horizontal-black.svg" alt="in-toto logo" />
                         <span style="position: absolute; right: 0; bottom: 40px" class="very-small faded">
-                            "... the claim format"
+                            "... the attestation framework"
                         </span>
                     </h3>
 					<div class="single">
 						<ul class="small">
-							<li>
+							<li class="fragment">
                                 A framework/standard (<code>in-toto.io</code>) for defining machine-readable
                                 <strong>attestations</strong>
                             </li>
-							<li>
+							<li class="fragment">
                                 An attestation = a signed <strong>Statement</strong> made of a <strong>subject</strong>
                                 (what's being attested to &mdash; e.g. a file + its digest) and a <strong>predicate</strong>
                                 (arbitrary metadata about the subject, identified by a <strong>predicate type</strong>
                                 that defines its schema)
                             </li>
-							<li>
+							<li class="fragment">
                                 in-toto itself doesn't sign or provide transparency &mdash; it just defines the <em>shape</em>
                                 of the claim
                             </li>
@@ -255,22 +276,35 @@
 					</aside>
 				</section>
 
+				<!-- Attestation diagrams -->
+				<section>
+					<h3>Attestation layers</h3>
+					<img src="./assets/attestation_layers.svg" alt="Attestation layers"/>
+					<p class="faded very-small">source: <a href="https://slsa.dev/spec/v1.2/attestation-model">slsa.dev/spec/v1.2/attestion-model</a></p>
+				</section>
+
+				<section>
+					<h3>Attestation example</h3>
+					<img src="./assets/attestation_example_english.svg" alt="Attestation example"/>
+					<p class="faded very-small">source: <a href="https://slsa.dev/spec/v1.2/attestation-model">slsa.dev/spec/v1.2/attestion-model</a></p>
+				</section>
+
 				<!-- 10. in-toto + Sigstore: two different jobs -->
 				<section>
 					<h3 class="left">in-toto + Sigstore: two different jobs</h3>
 					<div class="columns">
-						<div class="column">
-							<h4>in-toto provides</h4>
+						<div class="column fragment">
+							<img width="60%" src="./assets/in-toto-horizontal-black.svg" alt="in-toto logo" />
 							<ul class="small">
-								<li>The statement format (subject / predicate / predicate type)</li>
-								<li>A way to express arbitrary supply-chain claims (build provenance, publish events, SLSA, etc.)</li>
+								<li>The <strong>statement format</strong> (subject / predicate / predicate type)</li>
+								<li>A way to express arbitrary supply-chain <strong>claims</strong> (build provenance, publish events, SLSA, etc.)</li>
 							</ul>
 						</div>
-						<div class="column">
-							<h4>Sigstore provides</h4>
+						<div class="column fragment">
+							<img width="60%" src="./assets/sigstore-logo_horizontal-color.svg" alt="Sigstore logo" />
 							<ul class="small">
-								<li>The <em>signing</em> mechanism (ephemeral keys + Fulcio identity binding)</li>
-								<li>The <em>transparency</em> mechanism (Rekor)</li>
+								<li>The <strong>signing</strong> mechanism (ephemeral keys + Fulcio identity binding)</li>
+								<li>The <strong>transparency</strong> mechanism (Rekor)</li>
 								<li>The distributable container &mdash; a "Sigstore bundle" (cert + statement signature + inclusion proof)</li>
 							</ul>
 						</div>
@@ -281,104 +315,19 @@
 					</aside>
 				</section>
 
-				<!-- 11. Demo: signing osmprj's release checksums -->
 				<section>
-					<h2>Demo: signing osmprj's release checksums</h2>
-					<div class="single">
-						<p>
-							<a href="https://github.com/travishathaway/osmprj">osmprj</a> &mdash; a
-							tool for managing OpenStreetMap data. Release <code>0.3.0</code>'s CI
-							builds installers for 4 platforms and produces a
-							<code>checksums.sha256</code> file listing their hashes:
-						</p>
-						<pre><code class="language-plaintext" data-trim>
-432e607973e8fc557ce4c0a3e4052212f4e7259f65d016dfcf51aa6d7b084f78  osmprj-linux-64-installer.sh
-657aa973215f7778ef4f8b50b9ae0f35efd03508fc3359698423abb488530f3d  osmprj-linux-aarch64-installer.sh
-2bb9de9e33336ff4d279293d0f84fb50ff3206b151207ce115444a7970756ade  osmprj-osx-arm64-installer.sh
-3be67cd9a21b7a9467139f9008149c559072b14eb9470faf129cb4844e1f3314  install.sh
-						</code></pre>
-					</div>
-					<aside class="notes">
-						Real file content from the actual 0.3.0 release, not a mock-up. This is
-						the artifact we're about to sign.
-					</aside>
-				</section>
-
-				<!-- 12. Signing with cosign -->
-				<section data-background-color="#19191b">
-					<h2>Signing with cosign</h2>
-					<div class="single">
-						<pre><code class="language-yaml" data-trim data-line-numbers>
-- name: Generate checksums
-  run: |
-    (cd installers && sha256sum osmprj-*.sh osmprj-*.ps1) > checksums.sha256
-    (cd scripts && sha256sum install.sh install.ps1) >> checksums.sha256
-
-- uses: sigstore/cosign-installer@v3
-
-- name: Sign checksums
-  run: |
-    cosign sign-blob \
-      --yes \
-      --bundle checksums.sha256.bundle \
-      checksums.sha256
-						</code></pre>
-					</div>
-					<aside class="notes">
-						Runs entirely inside GitHub Actions with `permissions: id-token: write`.
-						No secrets configured &mdash; the OIDC token from the workflow run *is*
-						the identity proof. Produces `checksums.sha256.bundle`, uploaded as a
-						release asset next to `checksums.sha256`.
-					</aside>
-				</section>
-
-				<!-- 13. What's inside the bundle -->
-				<section>
-					<h2>What's inside the bundle</h2>
-					<div class="single">
-						<p>A Sigstore bundle is a single JSON file containing:</p>
-						<ul>
-							<li>The short-lived signing certificate from Fulcio (identity = <code>.../release.yml@refs/tags/0.3.0</code>, issuer = <code>token.actions.githubusercontent.com</code>)</li>
-							<li>The signature over the checksums file</li>
-							<li>The Rekor inclusion proof</li>
-						</ul>
-						<p>Ship this one file &mdash; no separate public key to distribute.</p>
-					</div>
-					<aside class="notes">
-						Emphasize "one file" &mdash; there's nothing else a consumer needs to
-						fetch or manage.
-					</aside>
-				</section>
-
-				<!-- 14. Verifying with cosign -->
-				<section data-background-color="#19191b">
-					<h2>Verifying with cosign</h2>
-					<div class="single">
-						<pre><code class="language-bash" data-trim data-line-numbers>
-cosign verify-blob \
-  --bundle checksums.sha256.bundle \
-  --certificate-identity "https://github.com/travishathaway/osmprj/.github/workflows/release.yml@refs/tags/0.3.0" \
-  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-  checksums.sha256
-						</code></pre>
-						<pre><code class="language-plaintext" data-trim>
-Verified OK
-						</code></pre>
-					</div>
-					<aside class="notes">
-						Emphasize the verifier pins an *identity + issuer*, not a key &mdash;
-						that's the philosophical shift from traditional signing.
-					</aside>
+					<h1>Sigstore and in-toto in the wild<br />🐅 🐘 🦜</h1>
 				</section>
 
 				<!-- 15. Python led the way -->
 				<section>
-					<h2>Python led the way: PEP 740 / PyPI attestations</h2>
+					<h3 class="left">
+						PEP 740 - PyPI attestations
+						<img src="./assets/pypi-logo.svg" width="10%" style="float: right; margin-top: -20px" alt="PyPI logo"/>
+					</h3>
 					<div class="single">
-						<ul>
-							<li><a href="https://docs.pypi.org/attestations/">docs.pypi.org/attestations</a> &mdash; PyPI now accepts <strong>digital attestations</strong> on uploads, built on PEP 740 and the in-toto Attestation Framework</li>
-							<li>Same two ingredients as our conda story: in-toto for the statement shape, Sigstore-style short-lived certs for signing</li>
-						</ul>
+						<a href="https://docs.pypi.org/attestations/">docs.pypi.org/attestations</a> &mdash; PyPI now accepts
+						<strong>digital attestations</strong> on uploads, built on PEP 740 and the in-toto Attestation Framework
 					</div>
 					<aside class="notes">
 						PyPI is proof this isn't theoretical &mdash; it's already running in
@@ -388,19 +337,22 @@ Verified OK
 
 				<!-- 16. What PyPI actually supports today -->
 				<section>
-					<h2>What PyPI actually supports today</h2>
+					<h3 class="left">
+						What PyPI actually supports today
+						<img src="./assets/pypi-logo.svg" width="10%" style="float: right; margin-top: -20px" alt="PyPI logo"/>
+					</h3>
 					<div class="columns">
-						<div class="column">
-							<h3>Predicate types</h3>
-							<ul>
+						<div class="column fragment">
+							<h4 class="left">Predicate types</h4>
+							<ul class="small">
 								<li><strong>SLSA Provenance</strong></li>
 								<li><strong>PyPI Publish attestation</strong></li>
 								<li>Max 2 attestations per file, no duplicate predicate types</li>
 							</ul>
 						</div>
-						<div class="column">
-							<h3>Who can attest</h3>
-							<ul>
+						<div class="column fragment">
+							<h4 class="left">Who can attest</h4>
+							<ul class="small">
 								<li>Only <strong>Trusted Publisher</strong> identities: GitHub Actions, GitLab CI/CD, Google Cloud, ActiveState</li>
 								<li>Machine identities, not personal keys</li>
 							</ul>
@@ -412,14 +364,41 @@ Verified OK
 					</aside>
 				</section>
 
+				<!-- Let's look at an example PyPI Publish -->
+				<section data-background-color="#19191b">
+					<h3 class="left">Example: PyPI Publish Attestation</h3>
+					<pre><code class="language-json" data-trim data-line-numbers>
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [{
+    "name": "package-1.0.0-py3-none-any.whl",
+    "digest": {
+      "sha256": "..."
+    }
+  }],
+  "predicateType": "https://docs.pypi.org/attestations/publish/v1",
+  "predicate": {}
+}
+						</code></pre>
+
+				</section>
+
 				<!-- 17. CEP 27: conda's publish attestation -->
 				<section>
-					<h2>CEP 27: conda's publish attestation</h2>
+					<h3>CEP 27: conda's publish attestation</h3>
 					<div class="single">
-						<ul>
-							<li>"Standardizing a publish attestation for the conda ecosystem" &mdash; <strong>Accepted</strong> CEP (<a href="https://conda.org/learn/ceps/cep-0027">conda.org/learn/ceps/cep-0027</a>)</li>
-							<li>Authors: Wolf Vollprecht &amp; William Woodruff</li>
-							<li>Defines an in-toto Statement + predicate type (<code>https://schemas.conda.org/attestations-publish-1.schema.json</code>) that answers: <em>who published this package, with what hash, to what channel?</em></li>
+						<ul class="small">
+							<li class="fragment">
+								"Standardizing a publish attestation for the conda ecosystem" &mdash; <strong>Accepted</strong> CEP
+								(<a href="https://conda.org/learn/ceps/cep-0027">conda.org/learn/ceps/cep-0027</a>)
+							</li>
+							<li class="fragment">
+								Authors: Wolf Vollprecht &amp; William Woodruff
+							</li>
+							<li class="fragment">
+								Defines an in-toto Statement + predicate type (<code>https://schemas.conda.org/attestations-publish-1.schema.json</code>)
+								that answers: <em>who published this package, with what hash, to what channel?</em>
+							</li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -455,11 +434,11 @@ Verified OK
 
 				<!-- 19. CEP 27: sign & verify flow -->
 				<section>
-					<h2>CEP 27: sign &amp; verify flow</h2>
+					<h3 class="left">CEP 27: sign &amp; verify flow</h3>
 					<div class="columns">
 						<div class="column">
-							<h3>Sign</h3>
-							<ol>
+							<h4 class="left">Sign</h4>
+							<ol class="small fragment">
 								<li>Generate ephemeral keypair</li>
 								<li>Bind to identity via Fulcio cert</li>
 								<li>Sign the in-toto statement</li>
@@ -468,8 +447,8 @@ Verified OK
 							</ol>
 						</div>
 						<div class="column">
-							<h3>Verify</h3>
-							<ol>
+							<h4>Verify</h4>
+							<ol class="small fragment">
 								<li>Fetch package + bundle</li>
 								<li>Verify bundle against expected identity</li>
 								<li>Check predicateType, subject name/digest, and (if present) targetChannel match</li>
@@ -484,12 +463,12 @@ Verified OK
 
 				<!-- 20. CEP 27's open question -->
 				<section>
-					<h2>CEP 27's open question: how do you <em>get</em> the bundle?</h2>
+					<h3 class="left">CEP 27's open question: how do you <em>get</em> the bundle?</h3>
 					<div class="single">
-						<ul>
-							<li>CEP 27 deliberately does <strong>not</strong> define a distribution mechanism for the bundles</li>
-							<li>Nor how clients establish trust in <em>which</em> identities to trust for a given package</li>
-							<li>Both are explicitly listed as future work in the CEP &mdash; that's exactly the gap CEP 142 is trying to close</li>
+						<ul class="small">
+							<li class="fragment">CEP 27 deliberately does <strong>not</strong> define a distribution mechanism for the bundles</li>
+							<li class="fragment">Nor how clients establish trust in <em>which</em> identities to trust for a given package</li>
+							<li class="fragment">Both are explicitly listed as future work in the CEP &mdash; that's exactly the gap CEP ??? is trying to close</li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -500,8 +479,8 @@ Verified OK
 
 				<!-- 21. CEP 142 (draft): serving attestations from channels -->
 				<section>
-					<h2>CEP 142 (draft): serving attestations from channels</h2>
-					<div class="single">
+					<h3>CEP ??? (draft): serving attestations from channels</h3>
+					<div class="single small">
 						<p><strong>Open PR, still under review &mdash; details below may change.</strong></p>
 						<ul>
 							<li>Proposes a <code>&lt;package_url&gt;.sigs</code> endpoint returning a JSON array of Sigstore bundles for that package</li>
@@ -516,7 +495,7 @@ Verified OK
 
 				<!-- 22. CEP 142: fetch & verify sketch -->
 				<section data-background-color="#19191b">
-					<h2>CEP 142: fetch &amp; verify sketch</h2>
+					<h3>CEP ???: fetch &amp; verify sketch</h3>
 					<div class="single">
 						<pre><code class="language-bash" data-trim>
 GET https://conda.anaconda.org/conda-forge/linux-64/numpy-1.26.0-py311h.conda.sigs
@@ -539,11 +518,11 @@ require: error   # error | warn | ignore
 
 				<!-- 23. Where this leaves conda -->
 				<section>
-					<h2>Where this leaves conda</h2>
+					<h3>Where this leaves conda</h3>
 					<div class="single">
-						<ul>
+						<ul class="small">
 							<li><strong>CEP 27</strong> = the <em>what</em> &mdash; the attestation format (accepted)</li>
-							<li><strong>CEP 142</strong> = the <em>how it's served</em> (in progress)</li>
+							<li><strong>CEP ???</strong> = the <em>how it's served</em> (in progress)</li>
 							<li>Together they'd let conda clients cryptographically verify "who published this, and where" &mdash; the same way PyPI and npm already do &mdash; without anyone managing a long-lived key</li>
 						</ul>
 					</div>
@@ -557,11 +536,12 @@ require: error   # error | warn | ignore
 				<section>
 					<h2>Resources / Links</h2>
 					<div class="single">
-						<ul>
+						<ul class="very-small">
 							<li><a href="https://sigstore.dev">Sigstore</a> &mdash; sigstore.dev</li>
 							<li><a href="https://github.com/sigstore/fulcio">Fulcio</a> &mdash; github.com/sigstore/fulcio</li>
 							<li><a href="https://rekor.sigstore.dev">Rekor</a> &mdash; rekor.sigstore.dev</li>
 							<li><a href="https://in-toto.io">in-toto</a> &mdash; in-toto.io</li>
+							<li><a href="https://github.com/in-toto/attestation">in-toto Attestations Framework</a></li>
 							<li><a href="https://github.com/travishathaway/osmprj">osmprj</a> &mdash; github.com/travishathaway/osmprj</li>
 							<li><a href="https://docs.pypi.org/attestations/">PyPI attestations</a> &mdash; docs.pypi.org/attestations</li>
 							<li><a href="https://conda.org/learn/ceps/cep-0027">CEP 27</a> &mdash; conda.org/learn/ceps/cep-0027</li>
