@@ -145,7 +145,7 @@
 					</aside>
 				</section>
 				<section>
-					<img src="./sigstore-process.svg" />
+					<img src="./assets/sigstore-process.svg" />
 				</section>
 
 				<!-- 6. Fulcio -->
@@ -156,9 +156,17 @@
 					</h3>
 					<div class="single with-corner-logo">
 						<ul class="small">
-							<li class="fragment">Issues X.509 certs that bind an <em>ephemeral</em> public key to a verified <strong>identity</strong> &mdash; a human via OIDC login, or a machine identity like <code>github.com/org/repo/.github/workflows/release.yml@refs/tags/v1.2.3</code></li>
-							<li class="fragment">Certs are valid for minutes, not years</li>
-							<li class="fragment">Issuance itself is logged to a Certificate Transparency (RFC 6962) log</li>
+							<li class="fragment">
+                                Issues X.509 certs that bind an <em>ephemeral</em> public key to a verified
+                                <strong>identity</strong> &mdash; a human via OIDC login, or a machine identity
+                                (e.g. GitHub Action)
+                            </li>
+							<li class="fragment">
+                                Valid OIDC providers: GitHub, GitLab, Google and Microsoft
+                            </li>
+							<li class="fragment">
+                                Issuance itself is logged to a Certificate Transparency (RFC 6962) log
+                            </li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -175,9 +183,18 @@
 					</h3>
 					<div class="single with-corner-logo">
 						<ul class="small">
-							<li class="fragment">An append-only, publicly auditable, tamper-evident log of signing events (public good instance at <code>rekor.sigstore.dev</code>)</li>
-							<li class="fragment">Every signature's existence becomes publicly observable, not just verifiable against a key</li>
-							<li class="fragment">An inclusion proof lets anyone confirm an entry is really in the log without blindly trusting the log operator</li>
+							<li class="fragment">
+                                An append-only, publicly auditable, tamper-evident log of signing events
+                                (public good instance at <code>rekor.sigstore.dev</code>)
+                            </li>
+							<li class="fragment">
+                                Every signature's existence becomes publicly observable, not just verifiable
+                                against a key
+                            </li>
+							<li class="fragment">
+                                An inclusion proof lets anyone confirm an entry is really in the log without
+                                blindly trusting the log operator
+                            </li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -202,14 +219,34 @@
 					</aside>
 				</section>
 
+                <section>
+                    <h1>Demo Time! <br /> 🏃</h1>
+                </section>
+
 				<!-- 9. What is in-toto? -->
 				<section>
-					<h2>What is in-toto?</h2>
+                    <h3 class="left" style="position: relative">
+                        <img width="40%" src="./assets/in-toto-horizontal-black.svg" alt="Rekor logo" />
+                        <span style="position: absolute; right: 0; bottom: 40px" class="very-small faded">
+                            "... the claim format"
+                        </span>
+                    </h3>
 					<div class="single">
-						<ul>
-							<li>A framework/standard (<code>in-toto.io</code>) for defining machine-readable <strong>attestations</strong></li>
-							<li>An attestation = a signed <strong>Statement</strong> made of a <strong>subject</strong> (what's being attested to &mdash; e.g. a file + its digest) and a <strong>predicate</strong> (arbitrary metadata about the subject, identified by a <strong>predicate type</strong> that defines its schema)</li>
-							<li>in-toto itself doesn't sign or provide transparency &mdash; it just defines the <em>shape</em> of the claim</li>
+						<ul class="small">
+							<li>
+                                A framework/standard (<code>in-toto.io</code>) for defining machine-readable
+                                <strong>attestations</strong>
+                            </li>
+							<li>
+                                An attestation = a signed <strong>Statement</strong> made of a <strong>subject</strong>
+                                (what's being attested to &mdash; e.g. a file + its digest) and a <strong>predicate</strong>
+                                (arbitrary metadata about the subject, identified by a <strong>predicate type</strong>
+                                that defines its schema)
+                            </li>
+							<li>
+                                in-toto itself doesn't sign or provide transparency &mdash; it just defines the <em>shape</em>
+                                of the claim
+                            </li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -220,18 +257,18 @@
 
 				<!-- 10. in-toto + Sigstore: two different jobs -->
 				<section>
-					<h2>in-toto + Sigstore: two different jobs</h2>
+					<h3 class="left">in-toto + Sigstore: two different jobs</h3>
 					<div class="columns">
 						<div class="column">
-							<h3>in-toto provides</h3>
-							<ul>
+							<h4>in-toto provides</h4>
+							<ul class="small">
 								<li>The statement format (subject / predicate / predicate type)</li>
 								<li>A way to express arbitrary supply-chain claims (build provenance, publish events, SLSA, etc.)</li>
 							</ul>
 						</div>
 						<div class="column">
-							<h3>Sigstore provides</h3>
-							<ul>
+							<h4>Sigstore provides</h4>
+							<ul class="small">
 								<li>The <em>signing</em> mechanism (ephemeral keys + Fulcio identity binding)</li>
 								<li>The <em>transparency</em> mechanism (Rekor)</li>
 								<li>The distributable container &mdash; a "Sigstore bundle" (cert + statement signature + inclusion proof)</li>
