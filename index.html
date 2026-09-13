@@ -20,6 +20,9 @@
 			.very-small {
 				font-size: 0.5em;
 			}
+            .tiny {
+                font-size: 0.3em;
+            }
 			.faded {
 				color: #666666;
 			}
@@ -59,11 +62,18 @@
 					<h2 class="left">Agenda</h2>
 					<div class="single">
 						<ul>
-							<li class="fragment">Sigstore basics; including Fulcio & Rekor</li>
-							<li class="fragment">What the in-toto framework is and why it matters</li>
-							<li class="fragment">PyPI's adoption of attestations</li>
-							<li class="fragment">CEP 27: conda's publish attestation</li>
-							<li class="fragment">CEP ???: serving attestations (in progress)</li>
+							<li class="fragment">
+                                <strong>Sigstore</strong> basics
+                            </li>
+							<li class="fragment">
+                                What the <strong>in-toto</strong> attestation framework is and why it matters
+                            </li>
+							<li class="fragment">
+                                <strong>PyPI</strong>'s adoption of attestations
+                            </li>
+							<li class="fragment">
+                                Where <strong>conda</strong> current is in its adoption
+                            </li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -108,6 +118,19 @@
 					</aside>
 				</section>
 
+                <!-- Metaphor with wax sealed letters -->
+                <section>
+                    <img src="assets/shan-lu-j0VL_haSyhM-unsplash.jpg" alt="Letter with wax seal" class="r-stretch"/>
+                    <div class="faded tiny">
+                        <em>
+                            Photo from
+                            <a href="https://unsplash.com/de/@toyamakanna">SHAN LU</a>
+                            on
+                            <a href="https://unsplash.com/de/fotos/weisser-briefumschlag-mit-brauner-briefmarke-j0VL_haSyhM">Unsplash</a>
+                        </em>
+                    </div>
+                </section>
+
 				<!-- 5a. How Sigstore solves the key problem -->
 				<section>
 					<h3 class="left">Before Sigstore</h3>
@@ -134,7 +157,7 @@
 				<!-- 5c. How Sigstore solves the key problem -->
 				<section>
 					<h3 class="left">With Sigstore</h3>
-					<ul>
+					<ul class="small">
 						<li class="fragment">Maintainer proves identity via OIDC ("I am <code>alice@example.com</code>" or "I am this exact GitHub Actions workflow")</li>
 						<li class="fragment">Gets an ephemeral keypair + short-lived cert</li>
 						<li class="fragment">Signs, then discards the private key</li>
@@ -206,11 +229,18 @@
 				<!-- 8. Why transparency matters -->
 				<section data-background-color="#19191b">
 					<h3 class="left">Why transparency matters</h3>
-					<div class="single">
+					<div class="single kinda-small">
 						<ul>
-							<li class="fragment">Without a log, a compromised identity can be used for a <em>targeted</em> attack the public never sees</li>
-							<li class="fragment">With a log, any use of an identity to sign something is discoverable in real time</li>
-							<li class="fragment">Turns "silent targeted compromise" into "publicly detectable event"</li>
+							<li class="fragment">
+                                Without a log, a compromised identity can be used for a <em>targeted</em>
+                                attack the public never sees
+                            </li>
+							<li class="fragment">
+                                With a log, any use of an identity to sign something is discoverable in real time
+                            </li>
+							<li class="fragment">
+                                Turns "silent targeted compromise" into "publicly detectable event"
+                            </li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -221,6 +251,10 @@
 
                 <section>
                     <h1>Demo Time! <br /> 🏃</h1>
+                    <aside class="notes">
+                        During the demo I'm going to show how to use cosign to sign a text file and show the entire
+                        authentication process.
+                    </aside>
                 </section>
 
 				<!-- What is an attestation? -->
@@ -275,6 +309,17 @@
 						sets up the next slide.
 					</aside>
 				</section>
+
+                <!-- Attestion form metaphor -->
+                <section>
+                    <img src="./assets/kelly-sikkema-SiOW0btU0zk-unsplash.jpg" alt="Tax form" width="80%" />
+                    <div class="tiny faded">
+                        <em>
+                            Photo from <a href="https://unsplash.com/de/@kellysikkema">Kelly Sikkema</a>
+                            on <a href="https://unsplash.com/de/fotos/schwarzer-keramikbecher-neben-weissem-druckerpapier-SiOW0btU0zk">Unsplash</a>
+                        </em>
+                    </div>
+                </section>
 
 				<!-- Attestation diagrams -->
 				<section>
@@ -367,17 +412,19 @@
 				<!-- Let's look at an example PyPI Publish -->
 				<section data-background-color="#19191b">
 					<h3 class="left">Example: PyPI Publish Attestation</h3>
-					<pre><code class="language-json" data-trim data-line-numbers>
+					<pre><code class="language-json kinda-small" data-trim data-line-numbers>
 {
   "_type": "https://in-toto.io/Statement/v1",
-  "subject": [{
-    "name": "package-1.0.0-py3-none-any.whl",
-    "digest": {
-      "sha256": "..."
+  "subject": [
+    {
+      "name": "zensus2pgsql-0.2.1-py3-none-any.whl",
+      "digest": {
+        "sha256": "10389790516f1...ada23"
+      }
     }
-  }],
+  ],
   "predicateType": "https://docs.pypi.org/attestations/publish/v1",
-  "predicate": {}
+  "predicate": null
 }
 						</code></pre>
 
@@ -411,18 +458,23 @@
 				<section data-background-color="#19191b">
 					<h2>The CEP 27 attestation shape</h2>
 					<div class="single">
-						<pre><code class="language-json" data-trim data-line-numbers>
+						<pre><code class="language-json small" data-trim data-line-numbers>
 {
   "_type": "https://in-toto.io/Statement/v1",
-  "subject": [{
-    "name": "file-name-0.0.1-h123456_5.conda",
-    "digest": {"sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"}
-  }],
+  "subject": [
+    {
+      "name": "7zip-26.03-hb0f4dca_0.conda",
+      "digest": {
+        "sha256": "bd861c7f606b975c4865bb6f82a1f30d81833e7a62bc967ef9835248f4f40347"
+      }
+    }
+  ],
   "predicateType": "https://schemas.conda.org/attestations-publish-1.schema.json",
   "predicate": {
-    "targetChannel": "https://prefix.dev/conda-forge"
+    "targetChannel": "https://prefix.dev/github-releases"
   }
 }
+
 						</code></pre>
 					</div>
 					<aside class="notes">

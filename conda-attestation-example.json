@@ -1,0 +1,1 @@
+{"_type":"https://in-toto.io/Statement/v1","subject":[{"name":"7zip-26.03-hb0f4dca_0.conda","digest":{"sha256":"bd861c7f606b975c4865bb6f82a1f30d81833e7a62bc967ef9835248f4f40347"}}],"predicateType":"https://schemas.conda.org/attestations-publish-1.schema.json","predicate":{"targetChannel":"https://prefix.dev/github-releases"}}

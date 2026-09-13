@@ -1,0 +1,1 @@
+{"_type":"https://in-toto.io/Statement/v1","subject":[{"name":"zensus2pgsql-0.2.1-py3-none-any.whl","digest":{"sha256":"10389790516f9c95cd30b93127bec1c7a3b42c0f4293e0bd0caac21bfb1ada23"}}],"predicateType":"https://docs.pypi.org/attestations/publish/v1","predicate":null}
