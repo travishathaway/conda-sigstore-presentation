@@ -416,13 +416,25 @@
 
 				<!-- 15. Python led the way -->
 				<section>
-					<h3 class="left">
-						PEP 740 - PyPI attestations
-						<img src="./assets/pypi-logo.svg" width="10%" style="float: right; margin-top: -20px" alt="PyPI logo"/>
-					</h3>
-					<div class="single">
-						<a href="https://docs.pypi.org/attestations/">docs.pypi.org/attestations</a> &mdash; PyPI now accepts
-						<strong>digital attestations</strong> on uploads, built on PEP 740 and the in-toto Attestation Framework
+					<div class="columns">
+						<div class="column">
+							<h1 class="left">
+								PEP 740
+							</h1>
+							<p class="small">
+								Index support for digital attestations
+							</p>
+							<img src="./assets/pypi-logo.svg" width="30%" style="margin-top: 0px" alt="PyPI logo"/>
+						</div>
+						<div class="column small" style="display: flex; align-items: center; height: 100%">
+							<div class="fragment">
+								 PyPI now accepts
+								<strong>digital attestations</strong> on uploads, built on PEP 740 and the in-toto Attestation Framework
+								<p class="very-small">
+									<em>source: <a href="https://docs.pypi.org/attestations/">docs.pypi.org/attestations</a></em>
+								</p>
+							</div>
+						</div>
 					</div>
 					<aside class="notes">
 						PyPI is proof this isn't theoretical &mdash; it's already running in
@@ -482,21 +494,27 @@
 
 				<!-- 17. CEP 27: conda's publish attestation -->
 				<section>
-					<h3>CEP 27: conda's publish attestation</h3>
-					<div class="single">
-						<ul class="small">
-							<li class="fragment">
-								"Standardizing a publish attestation for the conda ecosystem" &mdash; <strong>Accepted</strong> CEP
-								(<a href="https://conda.org/learn/ceps/cep-0027">conda.org/learn/ceps/cep-0027</a>)
-							</li>
-							<li class="fragment">
-								Authors: Wolf Vollprecht &amp; William Woodruff
-							</li>
-							<li class="fragment">
-								Defines an in-toto Statement + predicate type (<code>https://schemas.conda.org/attestations-publish-1.schema.json</code>)
-								that answers: <em>who published this package, with what hash, to what channel?</em>
-							</li>
-						</ul>
+					<div class="columns">
+						<div class="column">
+							<h1 class="left">CEP 27</h1>
+							<p class="small">Standardizing a publish attestation for the conda ecosystem</p>
+							<img src="./node_modules/reveal.js-conda-theme/assets/conda_c.svg"
+								 width="20%" style="margin-top: 0px" alt="conda logo"/>
+						</div>
+						<div class="column" style="display: flex; height: 100%; align-items: center">
+							<ul class="small">
+								<li class="fragment">
+									Defines in-toto <strong>statement</strong> and <strong>predicate</strong> type for
+									the conda ecosystem
+								</li>
+								<li class="fragment">
+									Includes information about the package + sha256 hash
+								</li>
+								<li class="fragment">
+									Unlike PyPI, defines a predicate type that includes a <code>targetChannel</code> field
+								</li>
+							</ul>
+						</div>
 					</div>
 					<aside class="notes">
 						This is conda's own version of the PyPI Publish attestation from the
@@ -539,7 +557,7 @@
 					<h3 class="left">CEP 27: sign &amp; verify flow</h3>
 					<div class="columns">
 						<div class="column fragment">
-							<h4 class="left">Sign</h4>
+							<h4 class="left">Sign ✍️ </h4>
 							<ol class="small">
 								<li>Generate ephemeral keypair</li>
 								<li>Bind to identity via Fulcio cert</li>
@@ -549,7 +567,7 @@
 							</ol>
 						</div>
 						<div class="column fragment">
-							<h4>Verify</h4>
+							<h4>Verify ✔ 🧾</h4>
 							<ol class="small">
 								<li>Fetch package + bundle</li>
 								<li>Verify bundle against expected identity</li>
@@ -565,7 +583,7 @@
 
 				<!-- 20. CEP 27's open question -->
 				<section>
-					<h3 class="left">CEP 27's open question: how do you <em>get</em> the bundle?</h3>
+					<h3 class="left">CEP 27's open question...<br /> How do you <em>get</em> the bundle?</h3>
 					<div class="single">
 						<ul class="small">
 							<li class="fragment">
@@ -607,6 +625,19 @@
 					</aside>
 				</section>
 
+				<section data-background-color="#19191b">
+					<h3>Sidecar URLs</h3>
+					<div class="single">
+						<pre><code class="language-bash small" data-trim data-line-numbers>
+							# Mutable URL
+							curl https://.../signed-package-1.2.1-hb0f4dca_0.conda.v0.sigs
+
+							# Immutable URL
+							curl https://.../signed-package-1.2.1-hb0f4dca_0.conda.v0.sigs.375...570
+						</code></pre>
+					</div>
+				</section>
+
 				<!-- 22. CEP 142: fetch & verify sketch -->
 				<section data-background-color="#19191b">
 					<h3>Repodata changes</h3>
@@ -624,8 +655,8 @@
 
 				<section>
 					<div style="float: left; width: 60%">
-						<p class="left kinda-small ">Great! Sigstore is coming soon.<br />All my packages are safe now, right?</p>
-						<p class="left kinda-small fragment" data-fragment-index="1"><br /><br /> <br />Right?!?! </p>
+						<p class="left kinda-small ">Great! <br />Sigstore is coming soon.<br />All my packages are safe now, right?</p>
+						<p class="left kinda-small fragment" data-fragment-index="1"><br /><br /> <br />Right?!?! 😅 </p>
 					</div>
 					<img src="./assets/puppet-awkward.gif" alt="Awkward puppet" class="float-right-image fragment" data-fragment-index="1" />
 				</section>
@@ -649,14 +680,21 @@
 				<section>
 					<div class="left">
 						<h3 class="">Further problems to solve...</h3>
-						<ul class="">
-							<li class="fragment">
-								Trust on first use (TOFU) or not?
-							</li>
-							<li class="fragment">
-								Managing friction (alert fatigue)
-							</li>
-						</ul>
+						<div class="columns">
+							<div class="column fragment">
+								<p>What does verification actually look like in practice?</p>
+							</div>
+							<div class="column">
+								<ul class="small">
+									<li class="fragment">
+										Trust on first use (TOFU) or not?
+									</li>
+									<li class="fragment">
+										Managing friction (alert fatigue)
+									</li>
+								</ul>
+							</div>
+						</div>
 					</div>
 				</section>
 
@@ -666,10 +704,11 @@
 					<div class="single">
 						<ul class="kinda-small">
 							<li class="fragment">
-								Once passed, the draft CEP enables the community to begin working on tools for implementing
+								Once passed, the draft CEP enables the community to begin
+								<strong>working on tools</strong> for implementing
 							</li>
 							<li class="fragment">
-								Communicate what Sigstore is to our users (like with this presentation!)
+								<strong>Communicate</strong> what Sigstore is to our users (like with this presentation!)
 							</li>
 							<li class="fragment">
 								Build a safer software supply chain for <strong>everyone</strong>!
@@ -684,9 +723,9 @@
 
 				<!-- 24. Resources / Links -->
 				<section>
-					<h2>Resources / Links</h2>
+					<h3 class="left">Resources / Links</h3>
 					<div class="single">
-						<ul class="very-small">
+						<ul class="small">
 							<li><a href="https://sigstore.dev">Sigstore</a> &mdash; sigstore.dev</li>
 							<li><a href="https://github.com/sigstore/fulcio">Fulcio</a> &mdash; github.com/sigstore/fulcio</li>
 							<li><a href="https://rekor.sigstore.dev">Rekor</a> &mdash; rekor.sigstore.dev</li>
