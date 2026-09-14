@@ -17,6 +17,9 @@
 			.small {
 				font-size: 0.75em;
 			}
+			.smaller {
+				font-size: 0.625em;
+			}
 			.very-small {
 				font-size: 0.5em;
 			}
@@ -43,6 +46,24 @@
 				background-color: #dddddd;
 				border-radius: 25px;
 				padding: 20px;
+			}
+			/* Image floated to the right with list text wrapping around it.
+			   Must be wrapped (with the text) in a non-flex container - e.g. `.single` -
+			   since reveal.js slides are flex containers and floats are ignored
+			   between direct flex-item siblings. */
+			.float-right-image {
+				float: right;
+				width: 30%;
+				margin: 0 0 1em 1.5em !important;
+				border: 4px solid var(--conda-green-300, #a5d999);
+				border-radius: 16px;
+			}
+			.float-left-image {
+				float: left;
+				width: 30%;
+				margin: 0 1.5em 0 0 !important;
+				border: 4px solid var(--conda-green-300, #a5d999);
+				border-radius: 16px;
 			}
 		</style>
 	</head>
@@ -141,9 +162,27 @@
 					</ul>
 				</section>
 
+				<section>
+					<h3 class="left">Example: Python releases <code>&lt;=3.13</code></h3>
+					<div class="single">
+						<img src="./assets/python-openpgp-releases.png" alt="Python OpenPGP" class="fragment float-left-image" />
+						<ul class="small">
+							<li class="fragment">
+								Earlier Python releases relied on using <strong>OpenPGP</strong> keys
+							</li>
+							<li class="fragment">
+								Each release manager was responsible for managing these public/private key pairs
+							</li>
+							<li class="fragment">
+								This made release management more cumbersome and prone to error
+							</li>
+						</ul>
+					</div>
+				</section>
+
 				<!-- 5b. How Sigstore solves the key problem -->
 				<section>
-					<p class="kinda-small left">
+					<p class="kinda-small left" style="width: 75%">
 						<em>
 							Sigstore addresses these problems by helping users move away from a key-based
 							signing approach to an identity-based one.
@@ -254,6 +293,17 @@
                     <aside class="notes">
                         During the demo I'm going to show how to use cosign to sign a text file and show the entire
                         authentication process.
+
+						cosgin sign-blob \
+							--yes \
+							--bundle test.bundle.json \
+							test.txt
+
+						cosign verify-blob \
+							--bundle test.bundle.json \
+							--certificate-oidc-issuer https://github.com/login/oauth \
+							--certificate-identity travis.j.hathaway@gmail.com \
+							test.txt
                     </aside>
                 </section>
 
@@ -465,7 +515,7 @@
     {
       "name": "7zip-26.03-hb0f4dca_0.conda",
       "digest": {
-        "sha256": "bd861c7f606b975c4865bb6f82a1f30d81833e7a62bc967ef9835248f4f40347"
+        "sha256": "bd861c...1f30d81833e7a62bc967ef9835248f4f40347"
       }
     }
   ],
@@ -488,9 +538,9 @@
 				<section>
 					<h3 class="left">CEP 27: sign &amp; verify flow</h3>
 					<div class="columns">
-						<div class="column">
+						<div class="column fragment">
 							<h4 class="left">Sign</h4>
-							<ol class="small fragment">
+							<ol class="small">
 								<li>Generate ephemeral keypair</li>
 								<li>Bind to identity via Fulcio cert</li>
 								<li>Sign the in-toto statement</li>
@@ -498,9 +548,9 @@
 								<li>Produce a Sigstore bundle</li>
 							</ol>
 						</div>
-						<div class="column">
+						<div class="column fragment">
 							<h4>Verify</h4>
-							<ol class="small fragment">
+							<ol class="small">
 								<li>Fetch package + bundle</li>
 								<li>Verify bundle against expected identity</li>
 								<li>Check predicateType, subject name/digest, and (if present) targetChannel match</li>
@@ -518,25 +568,37 @@
 					<h3 class="left">CEP 27's open question: how do you <em>get</em> the bundle?</h3>
 					<div class="single">
 						<ul class="small">
-							<li class="fragment">CEP 27 deliberately does <strong>not</strong> define a distribution mechanism for the bundles</li>
-							<li class="fragment">Nor how clients establish trust in <em>which</em> identities to trust for a given package</li>
-							<li class="fragment">Both are explicitly listed as future work in the CEP &mdash; that's exactly the gap CEP ??? is trying to close</li>
+							<li class="fragment">
+								CEP 27 deliberately does <strong>not</strong> define a distribution mechanism for the bundles
+							</li>
+							<li class="fragment">
+								Nor how clients establish trust in <em>which</em> identities to trust for a given package
+							</li>
+							<li class="fragment">
+								Both are explicitly listed as future work...
+							</li>
 						</ul>
 					</div>
 					<aside class="notes">
-						Set up the transition to CEP 142 &mdash; CEP 27 is "accepted" but
-						intentionally incomplete on distribution.
 					</aside>
 				</section>
 
-				<!-- 21. CEP 142 (draft): serving attestations from channels -->
+				<!-- 21. CEP XXX (draft): serving attestations from channels -->
 				<section>
-					<h3>CEP ??? (draft): serving attestations from channels</h3>
+					<h4 class="left">Draft CEP: Distribution of Sigstore Attestations for Conda Packages</h4>
 					<div class="single small">
-						<p><strong>Open PR, still under review &mdash; details below may change.</strong></p>
 						<ul>
-							<li>Proposes a <code>&lt;package_url&gt;.sigs</code> endpoint returning a JSON array of Sigstore bundles for that package</li>
-							<li>A new repodata field lets clients detect when a package's attestations exist/change without an extra round trip per package</li>
+							<li class="fragment">
+								Proposes a mutable <code>&lt;package_url&gt;.sigs</code> sidecar endpoint returning a JSON array of Sigstore
+								bundles for that package
+							</li>
+							<li class="fragment">
+								Additionally, specifies an immutable content addressable URL: <code>&lt;package_url&gt;.sigs.&lt;hash&gt;</code>
+							</li>
+							<li class="fragment">
+								A new <code>repodata</code> field lets clients detect when a package's attestations exist/change without
+								an extra round trip per package
+							</li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -547,35 +609,71 @@
 
 				<!-- 22. CEP 142: fetch & verify sketch -->
 				<section data-background-color="#19191b">
-					<h3>CEP ???: fetch &amp; verify sketch</h3>
+					<h3>Repodata changes</h3>
 					<div class="single">
-						<pre><code class="language-bash" data-trim>
-GET https://conda.anaconda.org/conda-forge/linux-64/numpy-1.26.0-py311h.conda.sigs
-						</code></pre>
-						<pre><code class="language-yaml" data-trim data-line-numbers>
-trusted_identities:
-  - "https://github.com/conda-forge/*"
-require: error   # error | warn | ignore
+						<pre><code class="language-json" data-line-numbers="4" data-trim data-line-numbers>
+{
+  "name": "foobar",
+  "version": "1.2.3",
+  "attestations_sha256": "37517e5f3...db0985b570",
+  ...
+}
 						</code></pre>
 					</div>
-					<aside class="notes">
-						Verification of each returned bundle still follows CEP 27's rules.
-						Label this "proposed, actively being revised in review" and mention the
-						still-open debates: whether the OIDC issuer must be pinned alongside
-						identity patterns, how lockfiles should pin/record attestation state
-						(since `.sigs` is mutable), and precise 404 vs. empty-array semantics
-						for channels that don't implement the CEP at all.
-					</aside>
+				</section>
+
+				<section>
+					<div style="float: left; width: 60%">
+						<p class="left kinda-small ">Great! Sigstore is coming soon.<br />All my packages are safe now, right?</p>
+						<p class="left kinda-small fragment" data-fragment-index="1"><br /><br /> <br />Right?!?! </p>
+					</div>
+					<img src="./assets/puppet-awkward.gif" alt="Awkward puppet" class="float-right-image fragment" data-fragment-index="1" />
+				</section>
+
+				<section>
+					<h3 class="left">Remember...</h3>
+					<ul>
+						<li class="fragment">
+							Sigstore only verifies <strong>who</strong> made a claim about an artifact and that it hasn't been
+							<strong>tampered</strong> with
+						</li>
+						<li class="fragment">
+							It makes absolutely no guarantees about the <strong>contents</strong> within it
+						</li>
+						<li class="fragment">
+							Trusting the publishers of these artifacts is your job!
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<div class="left">
+						<h3 class="">Further problems to solve...</h3>
+						<ul class="">
+							<li class="fragment">
+								Trust on first use (TOFU) or not?
+							</li>
+							<li class="fragment">
+								Managing friction (alert fatigue)
+							</li>
+						</ul>
+					</div>
 				</section>
 
 				<!-- 23. Where this leaves conda -->
 				<section>
-					<h3>Where this leaves conda</h3>
+					<h3 class="left">Where do we go from here?</h3>
 					<div class="single">
-						<ul class="small">
-							<li><strong>CEP 27</strong> = the <em>what</em> &mdash; the attestation format (accepted)</li>
-							<li><strong>CEP ???</strong> = the <em>how it's served</em> (in progress)</li>
-							<li>Together they'd let conda clients cryptographically verify "who published this, and where" &mdash; the same way PyPI and npm already do &mdash; without anyone managing a long-lived key</li>
+						<ul class="kinda-small">
+							<li class="fragment">
+								Once passed, the draft CEP enables the community to begin working on tools for implementing
+							</li>
+							<li class="fragment">
+								Communicate what Sigstore is to our users (like with this presentation!)
+							</li>
+							<li class="fragment">
+								Build a safer software supply chain for <strong>everyone</strong>!
+							</li>
 						</ul>
 					</div>
 					<aside class="notes">
@@ -594,10 +692,9 @@ require: error   # error | warn | ignore
 							<li><a href="https://rekor.sigstore.dev">Rekor</a> &mdash; rekor.sigstore.dev</li>
 							<li><a href="https://in-toto.io">in-toto</a> &mdash; in-toto.io</li>
 							<li><a href="https://github.com/in-toto/attestation">in-toto Attestations Framework</a></li>
-							<li><a href="https://github.com/travishathaway/osmprj">osmprj</a> &mdash; github.com/travishathaway/osmprj</li>
 							<li><a href="https://docs.pypi.org/attestations/">PyPI attestations</a> &mdash; docs.pypi.org/attestations</li>
 							<li><a href="https://conda.org/learn/ceps/cep-0027">CEP 27</a> &mdash; conda.org/learn/ceps/cep-0027</li>
-							<li><a href="https://github.com/conda/ceps/pull/142">CEP 142 PR</a> &mdash; github.com/conda/ceps/pull/142</li>
+							<li><a href="https://github.com/conda/ceps/pull/142">Draft Sigstore CEP PR</a> &mdash; github.com/conda/ceps/pull/142</li>
 						</ul>
 					</div>
 					<aside class="notes">
