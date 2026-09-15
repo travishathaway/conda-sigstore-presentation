@@ -9,11 +9,12 @@
 		"dev": "vite",
 		"start": "npm run dev",
 		"build": "vite build",
-		"mmdc": "mmdc"
+		"mmdc": "mmdc",
+		"render:sigstore-process": "mmdc -i sigstore-process.mmd -o assets/sigstore-process.svg -c mermaid-theme.json -b transparent"
 	},
 	"dependencies": {
 		"reveal.js": "^6.0.1",
-		"reveal.js-conda-theme": "^1.0.0"
+		"reveal.js-conda-theme": "^2.0.0"
 	},
 	"devDependencies": {
 		"@mermaid-js/mermaid-cli": "^11.17.0",

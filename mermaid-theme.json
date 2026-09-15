@@ -1,0 +1,39 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontFamily": "\"Open Sans\", \"Helvetica Neue\", Arial, sans-serif",
+    "textColor": "#181c17",
+    "primaryColor": "#ebf7e9",
+    "primaryTextColor": "#181c17",
+    "primaryBorderColor": "#2a6f1b",
+    "secondaryColor": "#eef0ee",
+    "secondaryTextColor": "#181c17",
+    "secondaryBorderColor": "#c2c8c1",
+    "tertiaryColor": "#f7f8f7",
+    "tertiaryTextColor": "#181c17",
+    "tertiaryBorderColor": "#dde1dd",
+    "lineColor": "#2a6f1b",
+    "actorBkg": "#ebf7e9",
+    "actorBorder": "#2a6f1b",
+    "actorTextColor": "#181c17",
+    "actorLineColor": "#c2c8c1",
+    "signalColor": "#2a6f1b",
+    "signalTextColor": "#181c17",
+    "labelBoxBkgColor": "#ebf7e9",
+    "labelBoxBorderColor": "#a5d999",
+    "labelTextColor": "#181c17",
+    "loopTextColor": "#181c17",
+    "noteBkgColor": "#ebf7e9",
+    "noteBorderColor": "#a5d999",
+    "noteTextColor": "#181c17",
+    "activationBkgColor": "#d6eed1",
+    "activationBorderColor": "#2a6f1b",
+    "sequenceNumberColor": "#ffffff"
+  },
+  "sequence": {
+    "actorFontFamily": "\"Open Sans\", \"Helvetica Neue\", Arial, sans-serif",
+    "noteFontFamily": "\"Open Sans\", \"Helvetica Neue\", Arial, sans-serif",
+    "messageFontFamily": "\"Open Sans\", \"Helvetica Neue\", Arial, sans-serif"
+  }
+}
