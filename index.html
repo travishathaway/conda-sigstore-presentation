@@ -131,14 +131,15 @@
 				<section class="conda-mark">
 					<h1>What is Sigstore?</h1>
 					<blockquote style="width: 800px">
-						<p>
-							<em>Sigstore comprises several tools that can be used independently or combined for a
-							comprehensive supply chain security solution. Sign your software without navigating
-							tricky security protocols. Verify signatures against a tamper-proof log.</em>
-						</p>
+						<p><em>
+							The mission of sigstore is to make it easy for developers to sign releases and for users to verify them.
+							You can think of it like Let’s Encrypt for Code Signing. Just like how <a href="https://letsencrypt.org/">Let’s Encrypt</a>
+							provides free certificates and automation tooling for HTTPS, sigstore provides free certificates and
+							tooling to automate and verify signatures of source code.
+						</em></p>
 					</blockquote>
 					<p class="conda-note">
-						source: <a href="https://www.sigstore.dev/how-it-works">sigstore.dev</a>
+						source: <a href="https://security.googleblog.com/2021/03/introducing-sigstore-easy-code-signing.html">security.googleblog.com</a>
 					</p>
 					<aside class="notes">
 						Motivate why Sigstore exists before defining it. The pain isn't
@@ -177,7 +178,7 @@
 				<section class="conda-mark">
 					<h1>Before Sigstore</h1>
 					<ol class="conda-steps">
-						<li class="fragment"><div>Maintainer generates a keypair</div></li>
+						<li class="fragment"><div>Maintainer generates a keypair (e.g. with GPG)</div></li>
 						<li class="fragment"><div>Publishes, rotates, and protects the public key forever</div></li>
 						<li class="fragment"><div>Users must fetch &amp; trust that key out-of-band</div></li>
 					</ol>
