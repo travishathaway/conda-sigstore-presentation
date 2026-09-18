@@ -127,7 +127,7 @@
 					</aside>
 				</section>
 
-				<!-- 3. What is Sigstore? -->
+				<!-- 3.a What is Sigstore? -->
 				<section class="conda-mark">
 					<h1>What is Sigstore?</h1>
 					<blockquote style="width: 800px">
@@ -146,6 +146,31 @@
 						cryptography &mdash; it's key management.
 					</aside>
 				</section>
+
+                <!-- 3.b What is Sigstore? -->
+                <section class="conda-mark">
+                    <h1>What is Sigstore?</h1>
+                    <ul class="conda-list text-large" style="width: 800px">
+                        <li class="fragment">
+                            Public service is operated as a non-profit service by
+                            <strong>OpenSSF/Linux Foundation</strong>
+                        </li>
+                        <li class="fragment">
+                            Supported on a variety of cloud providers like,
+                            <strong>GitHub, GitLab, Google and Microsoft</strong>
+                        </li>
+                        <li class="fragment">
+                            Can be <strong>self-hosted</strong>
+                        </li>
+                        <li class="fragment">
+                            Active <strong>open-source community</strong> with regular meetings
+                        </li>
+                    </ul>
+                    <aside class="notes">
+                        Motivate why Sigstore exists before defining it. The pain isn't
+                        cryptography &mdash; it's key management.
+                    </aside>
+                </section>
 
 				<!-- 4. The problem: long-lived signing keys -->
 				<section class="conda-mark">
@@ -248,17 +273,18 @@
 						<img width="34%" src="./assets/fulcio.svg" alt="Fulcio logo" />
 						<span class="conda-note" style="position: absolute; left: 425px; bottom: 6px; font-size: 0.75em">"... the certificate authority"</span>
 					</h2>
-					<ul class="conda-list">
+					<ul class="conda-list" style="width: 800px">
 						<li class="fragment" style="width: 800px">
                             Issues X.509 certs that bind an <em>ephemeral</em> public key to a verified
                             <strong>identity</strong> &mdash; a human via OIDC login, or a machine identity
                             (e.g. GitHub Action)
                         </li>
-						<li class="fragment">
-                            Valid OIDC providers: GitHub, GitLab, Google and Microsoft
+                        <li class="fragment">
+                            The signature includes claims obtained by the OIDC provider (e.g. email or GitHub repository)
                         </li>
 						<li class="fragment">
-                            Issuance itself is logged to a Certificate Transparency (RFC 6962) log
+                            Rather than having a long-lived private signing key (e.g. PGP), these keys are only
+                            used once and then immediately discarded (last 10 minutes)
                         </li>
 					</ul>
 					<aside class="notes">
@@ -294,25 +320,20 @@
 					</aside>
 				</section>
 
-				<!-- 8. Why transparency matters -->
+				<!-- 8. Threat model -->
 				<section class="conda-mark">
-					<h1>Why transparency matters</h1>
+					<h1>Threat model  🥷 🤺 🛡️</h1>
 					<ul class="conda-list text-large" style="width: 800px">
 						<li class="fragment">
-                            Without a log, a compromised identity can be used for a <em>targeted</em>
-                            attack the public never sees
+                            Protects against <strong>compromised package repositories</strong> and <strong>MITM attacks</strong>
                         </li>
 						<li class="fragment">
-                            With a log, any use of an identity to sign something is discoverable in real time
+                            Helps mitigate damage from <strong>compromised OIDC identities</strong> (via short-lived keys)
                         </li>
 						<li class="fragment">
-                            Turns "silent targeted compromise" into "publicly detectable event"
+                            Logging and log monitoring can be employed to <strong>detect abnormal events</strong>
                         </li>
 					</ul>
-					<aside class="notes">
-						This is the property CEP 27 explicitly calls out under
-						"Transparency and auditability."
-					</aside>
 				</section>
 
                 <section class="conda-section">
@@ -579,35 +600,6 @@
 					</aside>
 				</section>
 
-				<!-- 19. CEP 27: sign & verify flow -->
-				<section class="conda-mark">
-					<h1>CEP 27: sign &amp; verify flow</h1>
-					<div class="conda-cols">
-						<div class="fragment">
-							<h2>Sign ✍️</h2>
-							<ol class="conda-steps">
-								<li><div>Generate ephemeral keypair</div></li>
-								<li><div>Bind to identity via Fulcio cert</div></li>
-								<li><div>Sign the in-toto statement</div></li>
-								<li><div>Log to Rekor</div></li>
-								<li><div>Produce a Sigstore bundle</div></li>
-							</ol>
-						</div>
-						<div class="fragment">
-							<h2>Verify ✔ 🧾</h2>
-							<ol class="conda-steps">
-								<li><div>Fetch package + bundle</div></li>
-								<li><div>Verify bundle against expected identity</div></li>
-								<li><div>Check predicateType, subject name/digest, and (if present) targetChannel match</div></li>
-							</ol>
-						</div>
-					</div>
-					<aside class="notes">
-						This is exactly the generic Sigstore flow from earlier slides, just
-						instantiated with conda's specific predicate.
-					</aside>
-				</section>
-
 				<!-- 20. CEP 27's open question -->
 				<section class="conda-mark">
 					<h2>CEP 27's open question...<br /> How do you <em>get</em> the bundle?</h2>
@@ -644,17 +636,6 @@
 						Stress that this is a moving target &mdash; field names and exact
 						semantics are being actively revised in review.
 					</aside>
-				</section>
-
-				<section class="conda-mark">
-					<h2>Sidecar URLs</h2>
-					<pre class="text-xlarge"><code class="language-bash" data-theme="dark" data-trim data-line-numbers>
-# Mutable URL
-curl https://.../signed-package-1.2.1-hb0f4dca_0.conda.v0.sigs
-
-# Immutable URL
-curl https://.../signed-package-1.2.1-hb0f4dca_0.conda.v0.sigs.375...570
-					</code></pre>
 				</section>
 
 				<!-- 22. CEP 142: fetch & verify sketch -->
@@ -747,6 +728,10 @@ curl https://.../signed-package-1.2.1-hb0f4dca_0.conda.v0.sigs.375...570
 							<span class="conda-links-key">Sigstore</span>
 							<span><a href="https://sigstore.dev">sigstore.dev</a></span>
 						</div>
+                        <div>
+                            <span class="conda-links-key">Sigstore White Paper</span>
+                            <span><a href="https://dl.acm.org/doi/10.1145/3548606.3560596">dl.acm.org</a></span>
+                        </div>
 						<div>
 							<span class="conda-links-key">Fulcio</span>
 							<span><a href="https://github.com/sigstore/fulcio">github.com/sigstore/fulcio</a></span>
